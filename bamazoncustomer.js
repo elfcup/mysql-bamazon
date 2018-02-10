@@ -45,7 +45,7 @@ function askQuestions() {
         ])
         .then(function(userResponse) {
             console.log("You selected item number: ", userResponse.itemID);
-            console.log("You selected this many item(s): ", userResponse.itemAmount);
+            console.log("You selected this many item(s): ", userResponse.quantity);
             // connection.connect(function(err) {
             //     if (err) throw err;
             connection.query("SELECT item_id, product_name, department_name, price FROM products WHERE item_ID = ?", [userResponse.itemID], function(error, result, fields) {
@@ -57,24 +57,32 @@ function askQuestions() {
                         askQuestions();
                     } else {
                         console.table(result);
-                        // var stockAmount = connection.query("SELECT stock_quantity FROM products", function(error, results, fields) {
-                        //        if (error) {
-                        //         console.log(error);
-                        //        }
-                        //     })
+                        connection.query("SELECT stock_quantity FROM products WHERE item_id = ?",[userResponse.itemID], function(error, results, fields) {
+                               if (error) {
+                                console.log(error);
+                               }
+                               
+                                var availQuant = results[0].stock_quantity;
+                                console.log(availQuant);
+                               if (userResponse.quantity > availQuant) {
+                            console.log("Not enough stock");
+                          }
 
-                        //   if (userResponse.quantity > stockAmount) {
-                        //     console.log("Not enough stock");
-                        //   }
-
-                        // else  {console.log("You may purchase this");
-                        //         console.log(result);
-                        //     }
-
+                        else  {console.log("You may purchase this");
+                               connection.query("UPDATE products SET stock_quantity = " + (availQuant - userResponse.quantity) + " WHERE item_id = " + userResponse.itemID, function(error, results, fields) {
+                                if (error) {
+                                  console.log(error);
+                                } else {
+                                  // console.log(results);
+                                  console.log(availQuant);
+                                }
+                               })
+                            }
+                            })
 
                     }
 
- // console.log("Not enough stock!");
+
 
             })
         });
